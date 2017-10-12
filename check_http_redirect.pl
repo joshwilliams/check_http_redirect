@@ -30,7 +30,7 @@ use Getopt::Std;
 use LWP::UserAgent;
 
 my $plugin_name = 'Nagios check_http_redirect';
-my $VERSION             = '3.00';
+my $VERSION             = '3.01';
 
 # getopt module config
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
@@ -43,9 +43,11 @@ use constant EXIT_UNKNOWN       => 3;
 
 # parse cmd opts
 my %opts;
-getopts('vU:R:t:c:S:', \%opts);
+getopts('viU:R:t:c:S:', \%opts);
 $opts{t} = 5 unless (defined $opts{t});
 $opts{c} = 10 unless (defined $opts{c});
+my $verify_hostname = 1;
+$verify_hostname = 0 if defined $opts{i};
 if (not (defined $opts{U} ) or not (defined $opts{R} ) or not (defined $opts{S})) {
         print "ERROR: INVALID USAGE\n";
         HELP_MESSAGE();
@@ -55,7 +57,7 @@ if (not (defined $opts{U} ) or not (defined $opts{R} ) or not (defined $opts{S})
 #ASSUME A CRITICAL EXIT
 my $status = EXIT_CRITICAL;
 
-my $ua = LWP::UserAgent->new;
+my $ua = LWP::UserAgent->new(ssl_opts => { verify_hostname => $verify_hostname });
 
 $ua->agent('Redirect Bot ' . $VERSION);
 $ua->protocols_allowed( [ 'http', 'https'] );
@@ -124,6 +126,7 @@ sub HELP_MESSAGE
         -t          Timeout in seconds to wait for the URL to load. If the page fails to load, 
                     $plugin_name will exit with UNKNOWN state (default 60)
         -c          Depth of redirects to follow (default 10)
+        -i          Ignore strict certificate hostname verification
 
 EOHELP
 ;
